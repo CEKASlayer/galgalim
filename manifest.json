@@ -1,9 +1,17 @@
 {
   "name": "Galgalim",
   "short_name": "Galgalim",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
-  "icons": []
+  "description": "Tzeruf combinatorio y ruedas de gematria",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/512.png?text=G",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
