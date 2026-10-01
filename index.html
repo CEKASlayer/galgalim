@@ -458,4 +458,220 @@
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.05);
                     gain.gain.setValueAtTime(0, ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.1, ctx.currentT
+                    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + idx * 0.05 + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.05 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.05);
+                    osc.stop(ctx.currentTime + idx * 0.05 + 0.3);
+                });
+            } catch (e) {}
+        }
+
+        function playMonumentValleyChime() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const frequencies = [261.63, 392.00, 523.25, 659.25, 783.99];
+                frequencies.forEach((freq, index) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = index % 2 === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.06);
+                    gain.gain.setValueAtTime(0, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + index * 0.06 + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + index * 0.06 + 2.0);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + index * 0.06);
+                    osc.stop(ctx.currentTime + index * 0.06 + 2.2);
+                });
+            } catch (e) {}
+        }
+
+        function playDynamicRouletteTicks(durationMs) {
+            let elapsed = 0;
+            let currentInterval = 35; 
+            
+            function scheduleTick() {
+                if (elapsed >= durationMs) return;
+                
+                playIPhoneClickSound();
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(10); } catch (e) {}
+                }
+                
+                elapsed += currentInterval;
+                currentInterval *= 1.16; // Curva de frenado
+                
+                if (elapsed < durationMs) { 
+                    setTimeout(scheduleTick, currentInterval); 
+                }
+            }
+            scheduleTick();
+        }
+
+        function toggleInfoBox() {
+            if (isSpinning) return;
+            getAudioContext();
+            playIPhoneClickSound();
+            isExpanded = !isExpanded;
+            infoBox.classList.toggle('expanded', isExpanded);
+        }
+
+        function reduceGematria(num) {
+            while (num > 9) {
+                num = num.toString().split('').reduce((acc, digit) => acc + parseInt(digit), 0);
+            }
+            return num;
+        }
+
+        function updateState(withSound = true) {
+            const total = alphabet.length;
+            const slice = 360 / total;
+            
+            const outerIndex = (total - Math.round(outerAngle / slice) % total) % total;
+            const middleIndex = (total - Math.round(middleAngle / slice) % total) % total;
+            const innerIndex = (total - Math.round(innerAngle / slice) % total) % total;
+
+            updateActiveLetters(outerWheel, outerIndex);
+            updateActiveLetters(middleWheel, middleIndex);
+            updateActiveLetters(innerWheel, innerIndex);
+
+            const item1 = alphabet[outerIndex];
+            const item2 = alphabet[middleIndex];
+            const item3 = alphabet[innerIndex];
+            
+            const totalGematria = item1.val + item2.val + item3.val;
+
+            gematriaDisplay.innerText = `Gematria: ${totalGematria} (${item1.char} · ${item2.char} · ${item3.char})`;
+            
+            generateAbulafianSynthesis(totalGematria, item1, item2, item3);
+            
+            if (withSound) {
+                playMonumentValleyChime();
+            }
+        }
+
+        function updateActiveLetters(wheel, activeIdx) {
+            const letters = wheel.querySelectorAll('.letter');
+            letters.forEach((el, idx) => {
+                if (idx === activeIdx) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        function generateAbulafianSynthesis(sum, l1, l2, l3) {
+            const rootVal = reduceGematria(sum);
+            
+            let elementalDynamic = "";
+            const elements = [l1.element, l2.element, l3.element].join(" ");
+            
+            if (elements.includes("Madre") || elements.includes("Fuego") || elements.includes("Agua") || elements.includes("Aire")) {
+                elementalDynamic = `La presencia de letras Madre genera una sacudida primordial: la vibración de ${l1.char} en el manto exterior ${l1.action}, mientras la corriente media de ${l2.char} modula la potencia de ${l3.char}.`;
+            } else if (l1.type === "Doble" && l2.type === "Doble") {
+                elementalDynamic = `Cruce de dos puertas planetarias. La polaridad entre ${l1.char} y ${l2.char} exige un equilibrio sutil para que el asiento interior en ${l3.char} no colapse en rigidez.`;
+            } else {
+                elementalDynamic = `Las Ruedas Celestes de las letras Simples despliegan sus 12 senderos. La corriente de ${l1.char} viaja a través de ${l2.char} hasta fijarse en ${l3.char}.`;
+            }
+
+            let sefiraRelationship = "";
+            if (l1.sefira === l3.sefira) {
+                sefiraRelationship = `El principio y el fin de la tríada resuenan en la misma esfera de ${l1.sefira}, creando un bucle de contemplación directa.`;
+            } else {
+                sefiraRelationship = `El flujo desciende desde la canalización de ${l1.sefira}, atraviesa la estación de ${l2.sefira} y reposa en ${l3.sefira}.`;
+            }
+
+            const vowels = ["a", "e", "i", "o", "u"];
+            const v1 = vowels[(l1.val + sum) % 5];
+            const v2 = vowels[(l2.val + sum) % 5];
+            const v3 = vowels[(l3.val + sum) % 5];
+            const vocalPermutation = `${l1.char}(${v1}) - ${l2.char}(${v2}) - ${l3.char}(${v3})`;
+
+            let summaryText = `Permutación de Raíz ${rootVal} | ${l1.type} · ${l2.type} · ${l3.type}`;
+            if (sum === 26 || sum === 72 || sum === 216) {
+                summaryText = `¡Alineación de Nombre Sagrado! Gematria trascendente ${sum}`;
+            }
+
+            infoSummary.innerText = summaryText;
+
+            infoDetails.innerHTML = `
+                <strong>Análisis Gematria:</strong> ${sum} (Raíz Sefirótica: ${rootVal})<br><br>
+                <strong>· Exterior (${l1.char} = ${l1.val}):</strong> ${l1.type} (${l1.element}) — ${l1.arcana}<br>
+                <strong>· Media (${l2.char} = ${l2.val}):</strong> ${l2.type} (${l2.element}) — ${l2.arcana}<br>
+                <strong>· Interior (${l3.char} = ${l3.val}):</strong> ${l3.type} (${l3.element}) — ${l3.arcana}<br><br>
+                <em>Sintaxis del Tzeruf:</em> ${elementalDynamic} ${sefiraRelationship} Para desbloquear el intelecto agente con esta clave, el místico debe ${l1.axiom}, mientras vocaliza pausadamente la secuencia <strong>${vocalPermutation}</strong> en el ritmo del aliento sagrado.
+            `;
+        }
+
+        function spinWheels() {
+            if (isSpinning) return;
+            getAudioContext();
+            isSpinning = true;
+            menuModal.classList.remove('open');
+            
+            if (isExpanded) {
+                isExpanded = false;
+                infoBox.classList.remove('expanded');
+            }
+
+            const step = 360 / alphabet.length;
+            const randomDuration = Math.floor(Math.random() * 1400) + 800;
+
+            const extraRoundsOuter = (Math.floor(Math.random() * 5) + 3) * 360;
+            const extraRoundsMiddle = (Math.floor(Math.random() * 6) + 4) * 360;
+            const extraRoundsInner = (Math.floor(Math.random() * 7) + 5) * 360;
+
+            outerAngle += extraRoundsOuter + (Math.floor(Math.random() * alphabet.length) * step);
+            middleAngle += extraRoundsMiddle + (Math.floor(Math.random() * alphabet.length) * step);
+            innerAngle += extraRoundsInner + (Math.floor(Math.random() * alphabet.length) * step);
+
+            outerWheel.style.transition = `transform ${randomDuration}ms cubic-bezier(0.15, 0.85, 0.25, 1)`;
+            middleWheel.style.transition = `transform ${randomDuration}ms cubic-bezier(0.15, 0.85, 0.25, 1)`;
+            innerWheel.style.transition = `transform ${randomDuration}ms cubic-bezier(0.15, 0.85, 0.25, 1)`;
+
+            outerWheel.style.transform = `rotate(${outerAngle}deg)`;
+            middleWheel.style.transform = `rotate(${middleAngle}deg)`;
+            innerWheel.style.transform = `rotate(${innerAngle}deg)`;
+
+            playDynamicRouletteTicks(randomDuration);
+
+            setTimeout(() => {
+                updateState(true);
+                isSpinning = false;
+            }, randomDuration);
+        }
+
+        function resetWheels() {
+            if (isSpinning) return;
+            getAudioContext();
+            if (navigator.vibrate) navigator.vibrate(15);
+            playResetCalibrationSound();
+
+            outerWheel.style.transition = `transform 0.5s ease-out`;
+            middleWheel.style.transition = `transform 0.5s ease-out`;
+            innerWheel.style.transition = `transform 0.5s ease-out`;
+
+            outerAngle = 0;
+            middleAngle = 0;
+            innerAngle = 0;
+            outerWheel.style.transform = `rotate(0deg)`;
+            middleWheel.style.transform = `rotate(0deg)`;
+            innerWheel.style.transform = `rotate(0deg)`;
+            
+            if (isExpanded) {
+                isExpanded = false;
+                infoBox.classList.remove('expanded');
+            }
+
+            updateState(false);
+            menuModal.classList.remove('open');
+        }
+
+        updateState(false);
+    </script>
+</body>
+</html>
