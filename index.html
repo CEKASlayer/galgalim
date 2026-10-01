@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Galgalim - Tzeruf Combinatorio</title>
+    <title>Galgalim - Tzeruf Combinatorio Extático</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -79,7 +79,6 @@
             padding: 5px;
         }
 
-        /* Menú desplegable */
         .menu-modal {
             position: absolute;
             top: 50px;
@@ -115,7 +114,6 @@
             color: var(--bg-color);
         }
 
-        /* Contenedor de Ruedas */
         .wheels-container {
             position: relative;
             width: 320px;
@@ -144,7 +142,6 @@
             align-items: center;
             justify-content: center;
             border: 1px solid var(--wheel-border);
-            transition: transform 0.5s cubic-bezier(0.15, 0.85, 0.35, 1);
         }
 
         .wheel-outer { width: 300px; height: 300px; }
@@ -168,13 +165,12 @@
             font-weight: 600;
         }
 
-        /* Panel inferior */
         .footer-panel {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             margin-bottom: 10px;
         }
 
@@ -189,19 +185,79 @@
             letter-spacing: 0.2em;
             text-transform: uppercase;
             font-weight: 500;
+            direction: ltr;
         }
 
         .info-box {
             width: 100%;
             border: 1px solid var(--border-color);
-            padding: 14px;
-            text-align: center;
-            font-size: 0.8rem;
+            padding: 12px 14px;
+            font-size: 0.78rem;
             letter-spacing: 0.05em;
-            min-height: 50px;
+            min-height: 72px;
+            max-height: 180px;
+            overflow-y: hidden;
+            transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            cursor: pointer;
+            position: relative;
+            background: var(--bg-color);
             display: flex;
             align-items: center;
-            justify-content: center;
+        }
+
+        .info-box.expanded {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            align-items: flex-start;
+        }
+
+        .info-content-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .info-basic {
+            width: 100%;
+            text-align: center;
+            transition: opacity 0.2s ease-in-out;
+            opacity: 1;
+        }
+
+        .info-box.expanded .info-basic {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            pointer-events: none;
+            margin: 0;
+        }
+
+        .info-summary {
+            font-weight: 500;
+            display: block;
+        }
+
+        .expand-hint {
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.5;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .info-details {
+            display: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.73rem;
+            line-height: 1.5;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .info-box.expanded .info-details {
+            display: block;
+            opacity: 0.95;
         }
 
         .action-btn {
@@ -230,52 +286,91 @@
         <button class="menu-btn" onclick="toggleMenu()">≡</button>
         
         <div class="menu-modal" id="menuModal">
-            <button class="menu-option" onclick="toggleDarkMode()">Modo Oscuro</button>
+            <button class="menu-option" onclick="toggleDarkMode()">Modo Alternativo</button>
             <button class="menu-option" onclick="resetWheels()">Centrar Ruedas</button>
         </div>
     </header>
 
     <div class="wheels-container">
         <div class="pointer"></div>
-        
-        <!-- Rueda Exterior (22 letras) -->
         <div class="wheel wheel-outer" id="outerWheel"></div>
-        
-        <!-- Rueda Media (22 letras) -->
         <div class="wheel wheel-middle" id="middleWheel"></div>
-        
-        <!-- Rueda Interior (22 letras) -->
         <div class="wheel wheel-inner" id="innerWheel"></div>
     </div>
 
     <div class="footer-panel">
         <div class="separator-dots">- - -</div>
         <div class="gematria-display" id="gematriaDisplay">Gematria: --</div>
-        <div class="info-box" id="infoBox">Gira las ruedas para invocar la combinación y su arquetipo.</div>
+        
+        <div class="info-box" id="infoBox" onclick="toggleInfoBox()">
+            <div class="info-content-wrapper">
+                <div class="info-basic" id="infoBasic">
+                    <span class="info-summary" id="infoSummary">Gira las ruedas para invocar la combinación.</span>
+                    <span class="expand-hint">▼ Toca para desplegar la enseñanza del Tzeruf</span>
+                </div>
+                <div class="info-details" id="infoDetails"></div>
+            </div>
+        </div>
+
         <button class="action-btn" onclick="spinWheels()">Girar Ruedas</button>
     </div>
 
     <script>
-        // Alfabeto hebreo tradicional en orden (con valores de Gematria estándar)
         const alphabet = [
-            { char: 'א', val: 1 }, { char: 'ב', val: 2 }, { char: 'ג', val: 3 }, { char: 'ד', val: 4 },
-            { char: 'ה', val: 5 }, { char: 'ו', val: 6 }, { char: 'ז', val: 7 }, { char: 'ח', val: 8 },
-            { char: 'ט', val: 9 }, { char: 'י', val: 10 }, { char: 'כ', val: 20 }, { char: 'ל', val: 30 },
-            { char: 'מ', val: 40 }, { char: 'נ', val: 50 }, { char: 'ס', val: 60 }, { char: 'ע', val: 70 },
-            { char: 'פ', val: 80 }, { char: 'צ', val: 90 }, { char: 'ק', val: 100 }, { char: 'ר', val: 200 },
-            { char: 'ש', val: 300 }, { char: 'ת', val: 400 }
+            { char: 'א', val: 1, type: 'Madre', element: 'Aire', arcana: 'El aliento primordial y el origen sin dimensiones.', action: 'inicia la emanación descompresión del vacío', sefira: 'Keter / Hokhmah', axiom: 'vaciar la mente de formas finitas para recibir el aliento inextinguible' },
+            { char: 'ב', val: 2, type: 'Doble', element: 'Saturno / Planeta', arcana: 'La morada (Bayit), la dualidad y la estructura.', action: 'edifica el receptáculo físico del pensamiento', sefira: 'Binah', axiom: 'construir la morada sutil donde la luz pueda residir sin cegar' },
+            { char: 'ג', val: 3, type: 'Doble', element: 'Júpiter / Planeta', arcana: 'El puente dinámico y la abundancia desbordante.', action: 'proyecta la gracia a través del vacío', sefira: 'Hesed', axiom: 'tender puentes de compasión entre los mundos dispares' },
+            { char: 'ד', val: 4, type: 'Doble', element: 'Marte / Planeta', arcana: 'La puerta, el umbral y la humildad receptiva.', action: 'establece el umbral de disciplina y discernimiento', sefira: 'Gevurah', axiom: 'cruzar la puerta del temor sagrado hacia la claridad limpia' },
+            { char: 'ה', val: 5, type: 'Simple', element: 'Aries / Zodíaco', arcana: 'El aliento articulado y la ventana de la luz.', action: 'expande el aliento vital en todas direcciones', sefira: 'Tiferet', axiom: 'permitir que la luz contemple el mundo a través de la ventana del ser' },
+            { char: 'ו', val: 6, type: 'Simple', element: 'Tauro / Zodíaco', arcana: 'El gancho de unión que conecta cielo y tierra.', action: 'ancla lo superior en la sustancia de lo inferior', sefira: 'Yesod', axiom: 'fijar la intención divina en el eje central de la realidad' },
+            { char: 'ז', val: 7, type: 'Simple', element: 'Géminis / Zodíaco', arcana: 'La espada del espíritu, el sustento y la corona.', action: 'discierne entre la ilusión fugaz y la verdad', sefira: 'Netzah', axiom: 'blandir la espada de la atención pura para cortar la dispersión' },
+            { char: 'ח', val: 8, type: 'Simple', element: 'Cáncer / Zodíaco', arcana: 'El cercado protector y la vida interior.', action: 'resguarda la simiente divina dentro del recinto sagrado', sefira: 'Hod', axiom: 'fortalecer el cercado de la meditación para preservar el fuego' },
+            { char: 'ט', val: 9, type: 'Simple', element: 'Leo / Zodíaco', arcana: 'Lo oculto, la bondad secreta y el receptáculo.', action: 'custodia la bondad oculta en las profundidades', sefira: 'Yesod / Tiferet', axiom: 'inclinarse hacia la luz interior envuelta en la oscuridad del cuerpo' },
+            { char: 'י', val: 10, type: 'Simple', element: 'Virgo / Zodíaco', arcana: 'La chispa indivisible, el punto de origen.', action: 'concentra la potencia infinita en un punto fugaz', sefira: 'Hokhmah', axiom: 'reducir la totalidad al punto germinal de donde brota la creación' },
+            { char: 'כ', val: 20, type: 'Doble', element: 'Sol / Planeta', arcana: 'La palma abierta que moldea y sostiene.', action: 'otorga forma y moldura a la materia fluida', sefira: 'Keter / Malkhut', axiom: 'recibir con la mano izquierda para transmitir con la derecha' },
+            { char: 'ל', val: 30, type: 'Simple', element: 'Libra / Zodíaco', arcana: 'El aguijón del estudio y el ascenso contemplativo.', action: 'eleva el deseo del hombre hacia la altura celestial', sefira: 'Binah / Tiferet', axiom: 'estirar la garganta del espíritu para pronunciar los nombres inteligibles' },
+            { char: 'מ', val: 40, type: 'Madre', element: 'Agua', arcana: 'Las aguas primordiales, el vientre de la sabiduría.', action: 'disuelve las durezas en la matriz del silencio', sefira: 'Hesed / Binah', axiom: 'sumergirse en las aguas que purifican la memoria temporal' },
+            { char: 'נ', val: 50, type: 'Simple', element: 'Escorpio / Zodíaco', arcana: 'El pez en la profundidad, el renacimiento tras la caída.', action: 'desciende al abismo para rescatar las chispas atrapadas', sefira: 'Netzah / Hod', axiom: 'confiar en el renacimiento cuando la forma exterior se derrumba' },
+            { char: 'ס', val: 60, type: 'Simple', element: 'Sagitario / Zodíaco', arcana: 'El círculo protector y el soporte inamovible.', action: 'envuelve la psique en un escudo de simetría', sefira: 'Yesod', axiom: 'descansar en la redondez del Nombre que rodea todo sufrimiento' },
+            { char: 'ע', val: 70, type: 'Simple', element: 'Capricornio / Zodíaco', arcana: 'El ojo espiritual que contempla lo invisible.', action: 'descorre el velo de la materia ordinaria', sefira: 'Hokhmah / Ayin', axiom: 'mirar sin juzgar hasta que el objeto observado revele su raíz' },
+            { char: 'פ', val: 80, type: 'Doble', element: 'Venus / Planeta', arcana: 'La boca creadora y el poder del Verbo.', action: 'articula los alientos internos en sonidos de fuego', sefira: 'Netzah', axiom: 'guardar la boca en silencio hasta que la palabra sea pura luz' },
+            { char: 'צ', val: 90, type: 'Simple', element: 'Acuario / Zodíaco', arcana: 'El anzuelo del justo (Tzaddik) y el fundamento.', action: 'rectifica la curvatura de la intención egóica', sefira: 'Yesod / Malkhut', axiom: 'sostener el pilar del mundo mediante la rectitud de la mente' },
+            { char: 'ק', val: 100, type: 'Simple', element: 'Piscis / Zodíaco', arcana: 'La santidad en lo profundo y la resonancia.', action: 'extrae la santidad del refugio de las sombras', sefira: 'Malkhut', axiom: 'reconocer la huella del Creador incluso en los lugares de exilio' },
+            { char: 'ר', val: 200, type: 'Doble', element: 'Mercurio / Planeta', arcana: 'La cabeza (Rosh) y el intelecto en movimiento.', action: 'gobierna las fluctuaciones del pensamiento racional', sefira: 'Hokhmah / Binah', axiom: 'renovar la mente liberándola de las doctrinas de la costumbre' },
+            { char: 'ש', val: 300, type: 'Madre', element: 'Fuego', arcana: 'El fuego devorador de la transformación.', action: 'transmuta las impurezas en ceniza espiritual', sefira: 'Gevurah / Binah', axiom: 'encender la llama tripartita de la meditación sin temor a consumirse' },
+            { char: 'ת', val: 400, type: 'Doble', element: 'Luna / Planeta', arcana: 'El sello de la verdad (Emet) y la perfección del ciclo.', action: 'consuma el ciclo total de las emanaciones', sefira: 'Malkhut', axiom: 'estampar el sello de la verdad en la acción final del día' }
         ];
 
         let outerAngle = 0;
         let middleAngle = 0;
         let innerAngle = 0;
+        let isSpinning = false;
+        let isExpanded = false;
 
         const outerWheel = document.getElementById('outerWheel');
         const middleWheel = document.getElementById('middleWheel');
         const innerWheel = document.getElementById('innerWheel');
         const gematriaDisplay = document.getElementById('gematriaDisplay');
         const infoBox = document.getElementById('infoBox');
+        const infoSummary = document.getElementById('infoSummary');
+        const infoDetails = document.getElementById('infoDetails');
         const menuModal = document.getElementById('menuModal');
+
+        // AUDIO CONTEXT GLOBAL PERSISTENTE
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
 
         function createWheelElements(wheelElement, radius) {
             const total = alphabet.length;
@@ -284,9 +379,6 @@
                 const span = document.createElement('span');
                 span.className = 'letter';
                 span.innerText = item.char;
-                span.dataset.val = item.val;
-                span.dataset.index = index;
-                // Posicionamiento circular trigonométrico
                 span.style.transform = `rotate(${angle}deg) translate(0, -${radius}px) rotate(-${angle}deg)`;
                 wheelElement.appendChild(span);
             });
@@ -297,97 +389,73 @@
         createWheelElements(innerWheel, 42);
 
         function toggleMenu() {
+            if (isSpinning) return;
+            getAudioContext();
             menuModal.classList.toggle('open');
         }
 
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
-            toggleMenu();
-        }
-
-        function triggerHaptic() {
-            if (navigator.vibrate) {
-                navigator.vibrate(12); // Vibración háptica sutil
+            if (menuModal.classList.contains('open')) {
+                toggleMenu();
             }
         }
 
-        function updateState() {
-            triggerHaptic();
+        let touchStartX = 0;
+        let touchStartY = 0;
 
-            // Calcular índices activos basados en el ángulo actual (hacia arriba, 0 grados)
-            const total = alphabet.length;
-            
-            const outerIndex = (Math.round((-outerAngle / (360 / total))) % total + total) % total;
-            const middleIndex = (Math.round((-middleAngle / (360 / total))) % total + total) % total;
-            const innerIndex = (Math.round((-innerAngle / (360 / total))) % total + total) % total;
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+            getAudioContext();
+        }, { passive: true });
 
-            // Actualizar clases visuales de letras activas en el ápice superior
-            updateActiveLetters(outerWheel, outerIndex);
-            updateActiveLetters(middleWheel, middleIndex);
-            updateActiveLetters(innerWheel, innerIndex);
+        document.addEventListener('touchend', e => {
+            if (isSpinning) return;
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
 
-            // Calcular Gematria en tiempo real
-            const v1 = alphabet[outerIndex].val;
-            const v2 = alphabet[middleIndex].val;
-            const v3 = alphabet[innerIndex].val;
-            const totalGematria = v1 + v2 + v3;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
 
-            const c1 = alphabet[outerIndex].char;
-            const c2 = alphabet[middleIndex].char;
-            const c3 = alphabet[innerIndex].char;
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+                document.body.classList.toggle('dark-mode');
+            }
+        }, { passive: true });
 
-            gematriaDisplay.innerText = `Gematria: ${totalGematria} (${c1} · ${c2} · ${c3})`;
-            
-            // Arquetipo dinámico simple basado en valor
-            updateArchetype(totalGematria);
+        // SÍNTESIS DE SONIDOS
+        function playIPhoneClickSound() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const bufferSize = ctx.sampleRate * 0.014;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 2100; 
+                filter.Q.value = 1.5;
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.32, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.014);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+                noise.start(ctx.currentTime);
+            } catch (e) {}
         }
 
-        function updateActiveLetters(wheel, activeIdx) {
-            const letters = wheel.querySelectorAll('.letter');
-            letters.forEach((el, idx) => {
-                if (idx === activeIdx) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
-        }
-
-        function updateArchetype(sum) {
-            let desc = "Permutación equilibrada de fuerzas primordiales.";
-            if (sum < 100) desc = "Umbral de emanación sutil y principios puros.";
-            else if (sum >= 100 && sum < 300) desc = "Dinámica de canales intermedios y expansión activa.";
-            else if (sum >= 300) desc = "Convergencia de fuegos mayores y síntesis completa.";
-            infoBox.innerText = desc;
-        }
-
-        function spinWheels() {
-            const step = 360 / alphabet.length;
-            // Giros aleatorios limpios en múltiplos exactos de posiciones
-            outerAngle += (Math.floor(Math.random() * 8) + 4) * step * (Math.random() > 0.5 ? 1 : -1);
-            middleAngle += (Math.floor(Math.random() * 10) + 5) * step * (Math.random() > 0.5 ? 1 : -1);
-            innerAngle += (Math.floor(Math.random() * 12) + 6) * step * (Math.random() > 0.5 ? 1 : -1);
-
-            outerWheel.style.transform = `rotate(${outerAngle}deg)`;
-            middleWheel.style.transform = `rotate(${middleAngle}deg)`;
-            innerWheel.style.transform = `rotate(${innerAngle}deg)`;
-
-            setTimeout(updateState, 500); // Sincroniza el cálculo al terminar la transición visual
-        }
-
-        function resetWheels() {
-            outerAngle = 0;
-            middleAngle = 0;
-            innerAngle = 0;
-            outerWheel.style.transform = `rotate(0deg)`;
-            middleWheel.style.transform = `rotate(0deg)`;
-            innerWheel.style.transform = `rotate(0deg)`;
-            updateState();
-            toggleMenu();
-        }
-
-        // Inicialización al cargar
-        updateState();
-    </script>
-</body>
-</html>
+        function playResetCalibrationSound() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                [220, 440].forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.05);
+                    gain.gain.setValueAtTime(0, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.1, ctx.currentT
