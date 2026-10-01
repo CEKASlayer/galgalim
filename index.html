@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Galgalim</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --text-muted: #707070;
+            --border-color: #000000;
+            --panel-bg: #f7f7f7;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --text-muted: #9a9a9a;
+            --border-color: #444444;
+            --panel-bg: #1e1e1e;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        header { 
+            text-align: center; 
+            margin-top: 10px; 
+            width: 100%;
+            position: relative;
+        }
+        h1 { font-size: 1.4rem; font-weight: 700; margin: 0; letter-spacing: 5px; }
+        .subtitle { font-size: 0.7rem; color: var(--text-muted); margin: 3px 0 0 0; letter-spacing: 2px; }
+
+        .menu-icon {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 5px;
+            width: auto;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            z-index: 100;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+        }
+        .sidebar.open { right: 0; }
+        .sidebar h2 { font-size: 1rem; letter-spacing: 2px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .sidebar-option {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px;
+            text-align: left;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 0;
+        }
+        .close-sidebar {
+            margin-top: auto;
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.active { display: block; }
+
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .pointer-marker {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 12px solid var(--text-color);
+            z-index: 10;
+        }
+        .wheel {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 2.8s cubic-bezier(0.1, 0.8, 0.2, 1);
+            background-color: transparent;
+        }
+        .wheel-outer { width: 290px; height: 290px; z-index: 1; }
+        .wheel-middle { width: 195px; height: 195px; z-index: 2; }
+        .wheel-inner { width: 100px; height: 100px; z-index: 3; }
+        
+        .letter-node {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 400;
+            color: var(--text-muted);
+            font-family: 'Times New Roman', Georgia, serif;
+            transition: color 0.3s ease;
+            width: 20px; height: 20px;
+            opacity: 0.5;
+        }
+        .wheel-outer .letter-node { font-size: 1.15rem; }
+        .wheel-middle .letter-node { font-size: 0.95rem; }
+        .wheel-inner .letter-node { font-size: 0.75rem; }
+        
+        .letter-node.active-item {
+            color: var(--text-color) !important;
+            font-weight: bold;
+            opacity: 1;
+        }
+        
+        .display-panel {
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 10px;
+        }
+        .result-combination {
+            font-family: 'Times New Roman', Georgia, serif;
+            font-size: 2.3rem;
+            font-weight: bold;
+            letter-spacing: 8px;
+            margin-bottom: 0px;
+            color: var(--text-color);
+        }
+        .result-gematria {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .interpretation-box {
+            font-size: 0.75rem;
+            line-height: 1.4;
+            color: var(--text-color);
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            min-height: 55px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        button.main-btn {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            border: 1px solid var(--text-color);
+            padding: 14px 0;
+            border-radius: 0px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            cursor: pointer;
+            width: 100%;
+            outline: none;
+        }
+        button.main-btn:disabled { opacity: 0.3; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>GALGALIM</h1>
+        <p class="subtitle">TZERUF COMBINATORIO</p>
+        <button class="menu-icon" onclick="toggleSidebar()">☰</button>
+    </header>
+
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <h2>OPCIONES</h2>
+        <button class="sidebar-option" onclick="toggleTheme()">🌓 Alternar Modo (Oscuro/Claro)</button>
+        <button class="sidebar-option" onclick="toggleAudio()">🔊 Audio: <span id="audio-status">Activado</span></button>
+        <button class="sidebar-option" onclick="resetRitual()">🔄 Reiniciar Ritual</button>
+        <button class="sidebar-option close-sidebar" onclick="toggleSidebar()">CERRAR</button>
+    </div>
+
+    <div class="wheel-container">
+        <div class="pointer-marker"></div>
+        <div id="wheel-out" class="wheel wheel-outer"></div>
+        <div id="wheel-mid" class="wheel wheel-middle"></div>
+        <div id="wheel-in" class="wheel wheel-inner"></div>
+    </div>
+
+    <div class="display-panel">
+        <div class="result-combination" id="res-comb">---</div>
+        <div class="result-gematria" id="res-gem">GEMATRÍA: --</div>
+        <div class="interpretation-box" id="res-interp">Gira las ruedas para invocar la combinación y su arquetipo.</div>
+        <button id="spin-btn" class="main-btn" onclick="spinWheels()">GIRAR RUEDAS</button>
+    </div>
+
+    <script>
+        const alefBet = [
+            { char: 'א', val: 1, meaning: "Unidad, Aliento primordial, El principio oculto." },
+            { char: 'ב', val: 2, meaning: "Casa, Contenedor, Dualidad y construcción." },
+            { char: 'ג', val: 3, meaning: "Dinámica, Recompensa, El flujo de la vida." },
+            { char: 'ד', val: 4, meaning: "Puerta, Apertura hacia la consciencia." },
+            { char: 'ה', val: 5, meaning: "Revelación, Aliento divino, Expresión." },
+            { char: 'ו', val: 6, meaning: "Conector, El gancho que une cielo y tierra." },
+            { char: 'ז', val: 7, meaning: "Arma espiritual, Sustento y coronación." },
+            { char: 'ח', val: 8, meaning: "Vida, Equilibrio dinámico, Cerco protector." },
+            { char: 'ט', val: 9, meaning: "Lo oculto, El bien interior latente." },
+            { char: 'י', val: 10, meaning: "Punto germinal, Semilla de manifestación." },
+            { char: 'כ', val: 20, meaning: "Palma abierta, Capacidad de recibir y moldear." },
+            { char: 'ל', val: 30, meaning: "Aguijón de enseñanza, Aspiración elevada." },
+            { char: 'מ', val: 40, meaning: "Aguas ocultas, Matriz cósmica inabarcable." },
+            { char: 'נ', val: 50, meaning: "Existencia fluida, Caída y renacimiento." },
+            { char: 'ס', val: 60, meaning: "Soporte, Círculo de protección eterna." },
+            { char: 'ע', val: 70, meaning: "Ojo de la percepción y profunda visión." },
+            { char: 'פ', val: 80, meaning: "Boca creadora, Palabra manifestada." },
+            { char: 'צ', val: 90, meaning: "Rectitud, Esfuerzo alineado con la verdad." },
+            { char: 'ק', val: 100, meaning: "Santidad, Reflejo de la luz primordial." },
+            { char: 'ר', val: 200, meaning: "Cabeza, Consciencia soberana y origen." },
+            { char: 'ש', val: 300, meaning: "Fuego purificador, Aliento espiritual intenso." },
+            { char: 'ת', val: 400, meaning: "Sello de la perfección, Cierre y totalidad." }
+        ];
+
+        let audioEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playRouletteClick(freq, duration = 0.08, volume = 0.22) {
+            if (!audioEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 0.5, audioCtx.currentTime + duration);
+
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playFinalChime(freq, duration = 1.0, volume = 0.3) {
+            if (!audioEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function triggerHaptic(pattern = 40) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        function init() {
+            renderLetters('wheel-out', 130);
+            renderLetters('wheel-mid', 84);
+            renderLetters('wheel-in', 42);
+            updateSelection(0, 0, 0);
+        }
+
+        function renderLetters(elementId, radius) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '';
+            const total = alefBet.length;
+
+            alefBet.forEach((item, index) => {
+                const node = document.createElement('div');
+                node.className = 'letter-node';
+                node.id = `${elementId}-node-${index}`;
+                const angleDeg = (index / total) * 360;
+                const angleRad = ((angleDeg - 90) * Math.PI) / 180;
+                const x = Math.cos(angleRad) * radius;
+                const y = Math.sin(angleRad) * radius;
+                
+                node.style.left = `calc(50% + ${x}px - 10px)`;
+                node.style.top = `calc(50% + ${y}px - 10px)`;
+                node.style.transform = `rotate(${angleDeg}deg)`;
+                node.textContent = item.char;
+                el.appendChild(node);
+            });
+        }
+
+        function spinWheels() {
+            triggerHaptic(60);
+            playRouletteClick(300, 0.15, 0.3);
+
+            const total = alefBet.length;
+            const targetOut = Math.floor(Math.random() * total);
+            const targetMid = Math.floor(Math.random() * total);
+            const targetIn = Math.floor(Math.random() * total);
+
+            const angleOut = -((6 * 360) + (targetOut / total) * 360);
+            const angleMid = -((8 * 360) + (targetMid / total) * 360);
+            const angleIn = -((10 * 360) + (targetIn / total) * 360);
+
+            document.getElementById('wheel-out').style.transform = `rotate(${angleOut}deg)`;
+            document.getElementById('wheel-mid').style.transform = `rotate(${angleMid}deg)`;
+            document.getElementById('wheel-in').style.transform = `rotate(${angleIn}deg)`;
+
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+
+            const rouletteFrequencies = [520, 480, 440, 560, 600, 400, 650]; 
+            
+            let spinInterval = setInterval(() => {
+                const freq = rouletteFrequencies[Math.floor(Math.random() * rouletteFrequencies.length)];
+                playRouletteClick(freq, 0.06, 0.2);
+                triggerHaptic(20);
+            }, 120);
+
+            setTimeout(() => {
+                clearInterval(spinInterval);
+                btn.disabled = false;
+                updateSelection(targetOut, targetMid, targetIn);
+                
+                const itemOut = alefBet[targetOut];
+                const itemMid = alefBet[targetMid];
+                const itemIn = alefBet[targetIn];
+                
+                document.getElementById('res-comb').textContent = `${itemOut.char}${itemMid.char}${itemIn.char}`;
+                const totalVal = itemOut.val + itemMid.val + itemIn.val;
+                document.getElementById('res-gem').textContent = `GEMATRÍA: ${totalVal}`;
+
+                document.getElementById('res-interp').textContent = 
+                    `Resonancia: ${itemOut.meaning} Enlazado con ${itemMid.meaning.toLowerCase()} Convergiendo en ${itemIn.meaning.toLowerCase()}`;
+
+                triggerHaptic([100, 50, 150]);
+                playFinalChime(523.25, 1.2, 0.35);
+                setTimeout(() => playFinalChime(659.25, 1.0, 0.3), 120);
+            }, 2800);
+        }
+
+        function updateSelection(o, m, i) {
+            document.querySelectorAll('.letter-node').forEach(n => n.classList.remove('active-item'));
+            document.getElementById(`wheel-out-node-${o}`)?.classList.add('active-item');
+            document.getElementById(`wheel-mid-node-${m}`)?.classList.add('active-item');
+            document.getElementById(`wheel-in-node-${i}`)?.classList.add('active-item');
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+            triggerHaptic(25);
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audio-status').textContent = audioEnabled ? "Activado" : "Desactivado";
+            triggerHaptic(25);
+        }
+
+        function resetRitual() {
+            document.getElementById('wheel-out').style.transform = `rotate(0deg)`;
+            document.getElementById('wheel-mid').style.transform = `rotate(0deg)`;
+            document.getElementById('wheel-in').style.transform = `rotate(0deg)`;
+            document.getElementById('res-comb').textContent = "---";
+            document.getElementById('res-gem').textContent = "GEMATRÍA: --";
+            document.getElementById('res-interp').textContent = "Gira las ruedas para invocar la combinación y su arquetipo.";
+            updateSelection(0, 0, 0);
+            toggleSidebar();
+            triggerHaptic(40);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
