@@ -7,11 +7,11 @@
   "theme_color": "#000000",
   "description": "Tzeruf combinatorio y ruedas de gematria",
   "icons": [
-    {
-      "src": "https://via.placeholder.com/512.png?text=G",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+  {
+    "src": "./icon.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "any maskable"
+  }
   ]
 }
